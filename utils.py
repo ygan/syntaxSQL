@@ -290,19 +290,20 @@ def timeout_handler(num, stack):
 
 ## used in test.py
 def test_acc(model, batch_size, data,output_path):
-    table_dict = get_table_dict("./data/tables.json")
+    table_dict = get_table_dict("./data/spider/tables.json")
     f = open(output_path,"w")
     for item in data[:]:
         db_id = item["db_id"]
-        if db_id not in table_dict: print "Error %s not in table_dict" % db_id
+        if db_id not in table_dict: print("Error %s not in table_dict" % db_id)
         # signal.signal(signal.SIGALRM, timeout_handler)
         # signal.alarm(2) # set timer to prevent infinite recursion in SQL generation
         sql = model.forward([item["question_toks"]]*batch_size,[],table_dict[db_id])
         if sql is not None:
-            print(sql)
+            print("before gen_sql: "+sql)
             sql = model.gen_sql(sql,table_dict[db_id])
         else:
             sql = "select a from b"
+        print("gold query: "+item["query"])
         print(sql)
         print("")
         f.write("{}\n".format(sql))
@@ -319,7 +320,7 @@ def load_word_emb(file_name, load_used=False, use_small=False):
                     break
                 info = line.strip().split(' ')
                 if info[0].lower() not in ret:
-                    ret[info[0]] = np.array(map(lambda x:float(x), info[1:]))
+                    ret[info[0]] = np.fromiter(map(lambda x:float(x), info[1:]), dtype=np.float)
         return ret
     else:
         print ('Load used word embedding')

@@ -16,7 +16,7 @@ class WordEmbedding(nn.Module):
         self.SQL_TOK = SQL_TOK
 
         if trainable:
-            print "Using trainable embedding"
+            print("Using trainable embedding")
             self.w2i, word_emb_val = word_emb
             # tranable when using pretrained model, init embedding weights using prev embedding
             self.embedding = nn.Embedding(len(self.w2i), N_word)
@@ -24,7 +24,7 @@ class WordEmbedding(nn.Module):
         else:
             # else use word2vec or glove
             self.word_emb = word_emb
-            print "Using fixed embedding"
+            print("Using fixed embedding")
 
     def gen_x_q_batch(self, q):
         B = len(q)
@@ -33,16 +33,27 @@ class WordEmbedding(nn.Module):
         for i, one_q in enumerate(q):
             q_val = []
             for ws in one_q:
-                q_val.append(self.word_emb.get(ws, np.zeros(self.N_word, dtype=np.float32)))
-
-            val_embs.append([np.zeros(self.N_word, dtype=np.float32)] + q_val + [np.zeros(self.N_word, dtype=np.float32)])  #<BEG> and <END>
+                mm = self.word_emb.get(ws, np.zeros(self.N_word, dtype=np.float32))
+                # if isinstance(mm.tolist(), map):
+                #     mm = np.fromiter(mm.tolist(), dtype=np.float)
+                q_val.append(mm)
+            mm = [np.zeros(self.N_word, dtype=np.float32)] + q_val + [np.zeros(self.N_word, dtype=np.float32)]
+            val_embs.append(mm)  #<BEG> and <END>
             val_len[i] = 1 + len(q_val) + 1
         max_len = max(val_len)
 
         val_emb_array = np.zeros((B, max_len, self.N_word), dtype=np.float32)
+
         for i in range(B):
             for t in range(len(val_embs[i])):
-                val_emb_array[i, t, :] = val_embs[i][t]
+                try:
+                    val_emb_array[i, t, :] = val_embs[i][t]
+                except BaseException:
+                    print(i)
+                    print(t)
+                    print(val_embs[i][t])
+                    print(isinstance(val_embs[i][t], map))
+                    raise Exception("fucking problem")
         val_inp = torch.from_numpy(val_emb_array)
         if self.gpu:
             val_inp = val_inp.cuda()
@@ -71,7 +82,7 @@ class WordEmbedding(nn.Module):
                     else:
                         history_val.append(sum(emb_list) / float(ws_len))
                 #ROOT
-                elif isinstance(item,basestring):
+                elif isinstance(item,str):
                     if item == "ROOT":
                         item = "root"
                     elif item == "asc":

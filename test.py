@@ -6,15 +6,18 @@ import numpy as np
 from utils import *
 from supermodel import SuperModel
 
+ORI_TEST_DATA='data/spider/dev.json'
+ORI_SAVE_PATH='generated_datasets/generated_data_augment/saved_models'
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--train_emb', action='store_true',
             help='Train word embedding.')
     parser.add_argument('--toy', action='store_true',
                         help='If set, use small data; used for fast debugging.')
-    parser.add_argument('--models', type=str, help='path to saved model')
-    parser.add_argument('--test_data_path',type=str)
-    parser.add_argument('--output_path', type=str)
+    parser.add_argument('--models', default=ORI_SAVE_PATH, type=str, help='path to saved model')
+    parser.add_argument('--test_data_path',default=ORI_TEST_DATA,type=str)
+    parser.add_argument('--output_path', default=ORI_SAVE_PATH+'/dev_result_gan.txt', type=str)
     parser.add_argument('--history_type', type=str, default='full', choices=['full','part','no'], help='full, part, or no history')
     parser.add_argument('--table_type', type=str, default='std', choices=['std','hier','no'], help='standard, hierarchical, or no table info')
     args = parser.parse_args()
@@ -47,8 +50,10 @@ if __name__ == '__main__':
     data = json.load(open(args.test_data_path))
     # dev_data = load_train_dev_dataset(args.train_component, "dev", args.history)
 
+    # word_emb = None
     word_emb = load_word_emb('glove/glove.%dB.%dd.txt'%(B_word,N_word), \
             load_used=args.train_emb, use_small=USE_SMALL)
+
     # dev_data = load_train_dev_dataset(args.train_component, "dev", args.history)
     #word_emb = load_concat_wemb('glove/glove.42B.300d.txt', "/data/projects/paraphrase/generation/para-nmt-50m/data/paragram_sl999_czeng.txt")
 
@@ -57,7 +62,7 @@ if __name__ == '__main__':
     # agg_m, sel_m, cond_m = best_model_name(args)
     # torch.save(model.state_dict(), "saved_models/{}_models.dump".format(args.train_component))
 
-    print "Loading from modules..."
+    print("Loading from modules...")
     model.multi_sql.load_state_dict(torch.load("{}/multi_sql_models.dump".format(args.models)))
     model.key_word.load_state_dict(torch.load("{}/keyword_models.dump".format(args.models)))
     model.col.load_state_dict(torch.load("{}/col_models.dump".format(args.models)))

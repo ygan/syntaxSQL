@@ -6,19 +6,24 @@ import json
 import sys
 from collections import defaultdict
 
-###TODO: change dirs
-train_data_path = "./data/train.json"
-table_data_path = "./data/tables.json"
-if train_dev == "dev":
-    train_data_path = "./data/dev.json"
-
 train_dev = "train"
 if len(sys.argv) > 1:
     train_dev = sys.argv[1]
-train_data = json.load(open(train_data_path))
+
 history_option = "full"
 if len(sys.argv) > 2:
     history_option = sys.argv[2]
+
+###TODO: change dirs
+if train_dev == "dev":
+    train_data_path = "./data/spider/dev.json"
+elif train_dev == "others":
+    train_data_path = "./data/spider/train_others.json"  # train_others.json are from Restaurants, GeoQuery, Scholar, Academic, IMDB, and Yelp
+else:
+    train_data_path = "./data/spider/train_spider.json"
+
+table_data_path = "./data/spider/tables.json"
+train_data = json.load(open(train_data_path))
 
 OLD_WHERE_OPS = ('not', 'between', '=', '>', '<', '>=', '<=', '!=', 'in', 'like', 'is', 'exists')
 NEW_WHERE_OPS = ('=','>','<','>=','<=','!=','like','not in','in','between','is')
@@ -99,8 +104,8 @@ class MultiSqlPredictor:
 
     def generate_output(self):
         for key in self.sql:
-            if key in self.keywords and self.sql[key]:
-                return self.history + ['root'], key, self.sql[key]
+            if key in self.keywords and self.sql[key]: # if key in ('intersect', 'except', 'union') and self.sql[key] is not null
+                return self.history + ['root'], key, self.sql[key] # only return when ('intersect', 'except', 'union') appear in sql.
         return self.history + ['root'], 'none', self.sql
 
 
@@ -271,24 +276,26 @@ def parser_item_with_long_history(question_tokens, sql, table, history, dataset)
         node = stack.pop()
         if node[0] == "root":
             history, label, sql = MultiSqlPredictor(question_tokens, node[1], history).generate_output()
+            # if(history != ['root']):
+            #     print(history)
             dataset['multi_sql_dataset'].append({
                 "question_tokens": question_tokens,
                 "ts": table_schema,
-                "history": history[:],
+                "history": history[:], # only ['root'] for original sql root not subquery
                 "label": SQL_OPS[label]
             })
             history.append(label)
             if label == "none":
                 stack.append((label,sql))
-            else:
-                node[1][label] = None
-                stack.append((label, node[1],sql))
+            else: # When label is 'intersect' or 'union' or 'except'
+                node[1][label] = None #label now is in{'intersect', 'except', 'union'}. delete the second sql query
+                stack.append((label, node[1],sql)) # node[1] is the first query, sql is the second query. label is the connection between these two query.
             # if label != "none":
                 # stack.append(("none",node[1]))
         elif node[0] in ('intersect', 'except', 'union'):
-            stack.append(("root",node[1]))
-            stack.append(("root",node[2]))
-        elif node[0] == "none":
+            stack.append(("root",node[1])) # the first query. appear before ('intersect', 'except', 'union')
+            stack.append(("root",node[2])) # the second query. appear after ('intersect', 'except', 'union')
+        elif node[0] == "none": # kewword dataset:
             with_join = len(node[1]["from"]["table_units"]) > 1
             history, label, sql = KeyWordPredictor(question_tokens, node[1], history).generate_output()
             label_idxs = []
@@ -645,7 +652,7 @@ def parse_data(data):
         "having_dataset": [],
         "andor_dataset":[]
     }
-    table_dict = get_table_dict(table_data_path)
+    table_dict = get_table_dict(table_data_path)  # db_dict is better
     for item in data:
         if history_option == "full":
         # parser_item(item["question_toks"], item["sql"], table_dict[item["db_id"]], [], dataset)
