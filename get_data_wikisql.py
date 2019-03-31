@@ -134,9 +134,9 @@ def parse_file_and_sql(filepath, schema, db_id):
         if ord('0') <= ord(line[0]) <= ord('9'):
             #remove question number
             if len(questions) != 0:
-            	print '\n-----------------------------wrong indexing!-----------------------------------\n'
-            	print 'questions: ', questions
-            	sys.exit()
+                print('\n-----------------------------wrong indexing!-----------------------------------\n')
+                print('questions: '+ questions)
+                sys.exit()
             index = line.find(".")
             if index != -1:
                 line = line[index+1:]
@@ -144,71 +144,71 @@ def parse_file_and_sql(filepath, schema, db_id):
                 questions.append(line.lstrip().rstrip())
             i += 1
             continue
-	if line.startswith("P:"):
-	    index = line.find("P:")
-	    line = line[index+2:]
-	    if line != '' and len(line) != 0:
-		questions.append(line.lstrip().rstrip())
-	    has_prefix = True
-	if (line.startswith("select") or line.startswith("SELECT") or line.startswith("Select") or \
-	    line.startswith("with") or line.startswith("With") or line.startswith("WITH")) and has_prefix:
-	    sql = [line]
-	    i += 1
-	    while i < len(lines):
-		line = lines[i]
-		line = lines[i].lstrip().rstrip()
-		line = line.replace("\r","")
-		line = line.replace("\n","")
-		if len(line) == 0 or len(line.strip()) == 0 or ord('0') <= ord(line[0]) <= ord('9') or \
-		   not (line[0].isalpha() or line[0] in ['(',')','=','<','>', '+', '-','!','\'','\"','%']):
-		    break
-		sql.append(line)
-		i += 1
-	    sql = " ".join(sql)
-	    sql = sqlparse.format(sql, reindent=False, keyword_case='upper')
-	    sql = re.sub(r"(<=|>=|=|<|>|,)",r" \1 ",sql)
-#			sql = sql.replace("\"","'")
-	    sql = re.sub(r"(T\d+\.)\s",r"\1",sql)
-	    #if len(questions) != 2:
-	    #	print '\n-----------------------------wrong indexing!-----------------------------------\n'
-	    #	print 'questions: ', questions
-	    #	sys.exit()
-	    for ix, q in enumerate(questions):
-                try:
-                    q = q.encode("utf8")
-                    sql = sql.encode("utf8")
-                    q_toks = word_tokenize(q)
-                    query_toks = word_tokenize(sql)
-                    query_toks_no_value = strip_query(sql)
-                    sql_label = None
+    if line.startswith("P:"):
+        index = line.find("P:")
+        line = line[index+2:]
+        if line != '' and len(line) != 0:
+            questions.append(line.lstrip().rstrip())
+        has_prefix = True
+    if (line.startswith("select") or line.startswith("SELECT") or line.startswith("Select") or \
+        line.startswith("with") or line.startswith("With") or line.startswith("WITH")) and has_prefix:
+        sql = [line]
+        i += 1
+        while i < len(lines):
+            line = lines[i]
+            line = lines[i].lstrip().rstrip()
+            line = line.replace("\r","")
+            line = line.replace("\n","")
+            if len(line) == 0 or len(line.strip()) == 0 or ord('0') <= ord(line[0]) <= ord('9') or \
+               not (line[0].isalpha() or line[0] in ['(',')','=','<','>', '+', '-','!','\'','\"','%']):
+                break
+            sql.append(line)
+            i += 1
+        sql = " ".join(sql)
+        sql = sqlparse.format(sql, reindent=False, keyword_case='upper')
+        sql = re.sub(r"(<=|>=|=|<|>|,)",r" \1 ",sql)
+#       sql = sql.replace("\"","'")
+        sql = re.sub(r"(T\d+\.)\s",r"\1",sql)
+        #if len(questions) != 2:
+        #    print '\n-----------------------------wrong indexing!-----------------------------------\n'
+        #    print 'questions: ', questions
+        #    sys.exit()
+        for ix, q in enumerate(questions):
+            try:
+                q = q.encode("utf8")
+                sql = sql.encode("utf8")
+                q_toks = word_tokenize(q)
+                query_toks = word_tokenize(sql)
+                query_toks_no_value = strip_query(sql)
+                sql_label = None
 
-                    sql_label = get_sql(schema, sql)
-                    #print("query: {}".format(sql))
-                    #print("\ndb_id: {}".format(db_id))
-                    #print("query: {}".format(sql))
-                    ret.append({'question': q,
-                            'question_toks': q_toks,
-                            'query': sql,
-                            'query_toks': query_toks,
-                            'query_toks_no_value': query_toks_no_value,
-                            'sql': sql_label,
-                            'db_id': db_id})
-                except Exception as e:
-                    #print("query: {}".format(sql))
-                    #print(e)
-                    pass
-                questions = []
-		has_prefix = False
-		continue
+                sql_label = get_sql(schema, sql)
+                #print("query: {}".format(sql))
+                #print("\ndb_id: {}".format(db_id))
+                #print("query: {}".format(sql))
+                ret.append({'question': q,
+                        'question_toks': q_toks,
+                        'query': sql,
+                        'query_toks': query_toks,
+                        'query_toks_no_value': query_toks_no_value,
+                        'sql': sql_label,
+                        'db_id': db_id})
+            except Exception as e:
+                #print("query: {}".format(sql))
+                #print(e)
+                pass
+            questions = []
+            has_prefix = False
+            continue
 
-	i += 1
+        i += 1
 
     return ret
 
-
+# python get_data_wikisql.py data/data_augment/txt data/data_augment/wikisql_tables.json data/data_augment/out.json
 if __name__ == '__main__':
     if len(sys.argv) < 3:
-        print "Usage: python get_data.py [dir containing reviewed files] [processed table json file] [output file name e.g. output.json]"
+        print("Usage: python get_data.py [dir containing reviewed files] [processed table json file] [output file name e.g. output.json]")
         sys.exit()
     input_dir = sys.argv[1]
     table_file = sys.argv[2]
@@ -225,17 +225,17 @@ if __name__ == '__main__':
                 fn_map[f] = db
                 continue
         if flag == True:
-            print "db not found: ", f
+            print("db not found: ", f)
     if len(db_files) != len(fn_map.keys()):
         tab_db_files = [f.lower() for f in fn_map.keys()]
-        print 'Warning: misspelled files: ', [f for f in db_files if f.lower() not in tab_db_files]
+        print('Warning: misspelled files: ', [f for f in db_files if f.lower() not in tab_db_files])
         sys.exit()
 
     data = []
     for f, db_id in fn_map.items():
         raw_file = join(input_dir, f)
         #print 'reading labeled file for db: ', db_id
-	schema = schemas[db_id]
+        schema = schemas[db_id]
         table = tables[db_id]
         schema = Schema(schema, table)
         data_one = parse_file_and_sql(raw_file, schema, db_id)

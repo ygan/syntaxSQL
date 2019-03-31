@@ -427,11 +427,11 @@ def generate_every_db(db):
             traceback.print_exc()
             print("skip db {}".format(db_name))
             return
-        f = open("data_augment/{}.txt".format(db_name),"w")
+        f = open("data/data_augment/{}.txt".format(db_name),"w")
 
 
         idx = 0
-        patterns = load_patterns("data_augment/train_patterns.json", schema)
+        patterns = load_patterns("data/data_augment/train_patterns.json", schema)
 
         while idx < 10:
             pattern = random.choice(patterns)
@@ -461,7 +461,7 @@ def generate_every_db(db):
     #     idx += 1
 
 if __name__ == "__main__":
-    dbs = json.load(open("data_augment/wikisql_tables.json"))
+    dbs = json.load(open("data/data_augment/wikisql_tables.json"))
     count = 0
     for db in dbs[:]:
         if count % 1000 == 0:
