@@ -427,7 +427,7 @@ def generate_every_db(db):
             traceback.print_exc()
             print("skip db {}".format(db_name))
             return
-        f = open("data/data_augment/{}.txt".format(db_name),"w")
+        f = open("data/data_augment/txt/{}.txt".format(db_name),"w")
 
 
         idx = 0
